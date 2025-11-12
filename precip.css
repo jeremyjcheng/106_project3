@@ -1,0 +1,33 @@
+/* Stacked precipitation overview (light theme) */
+:root{
+  --bg:#ffffff;
+  --grid:#e8ecf2;
+  --ink:#333;
+  --accent:#f39a85;
+  --outline:#ffffff;
+  --muted:#6c7a89;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+.bar{padding:18px 22px 0}
+.bar h1{margin:0 0 4px;font-weight:700}
+.bar .hint{margin:0;color:var(--muted)}
+.wrap{max-width:1100px;margin:6px auto 30px;padding:0 16px}
+.axis path,.axis line{stroke:#d9dee7}
+.axis text{fill:#8a97aa}
+.overview svg{width:100%;height:auto;display:block}
+.layer{fill:var(--accent);opacity:.55;stroke:#fff;stroke-width:.6;paint-order:stroke}
+.layer.dim{opacity:.12}
+.layer.focus{opacity:.85;stroke:var(--outline);stroke-width:1.2}
+.tooltip{
+  position:fixed;pointer-events:none;background:#fff;border:1px solid #d0d7e6;
+  border-radius:10px;padding:10px 12px;box-shadow:0 8px 30px rgba(0,0,0,.15);
+  font-size:12px;transform:translate(-50%,-120%);white-space:nowrap;z-index:999;
+}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;padding:18px}
+.modal[aria-hidden="false"]{display:flex}
+.panel{background:#fff;border:1px solid #d0d7e6;border-radius:14px;padding:14px 14px 10px;max-width:1000px;width:96vw}
+.close{float:right;border:0;background:#ecf1f8;color:#333;border-radius:10px;padding:0 10px;font-size:24px;cursor:pointer}
+.detail{height:560px;margin-top:6px}
+.detail svg{width:100%;height:auto;display:block}
+.nameLabel{font-size:80px;font-weight:700;fill:rgba(0,0,0,.2);text-anchor:middle;dominant-baseline:middle}
