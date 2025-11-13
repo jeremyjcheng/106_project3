@@ -46,28 +46,6 @@ body {
     color: #fff;
 }
 
-/* Hero Section */
-.hero {
-  background-color: var(--bg-light-blue);
-  color: var(--text-color);
-  padding: 1rem 0 2rem 0;
-  text-align: center;
-  border-bottom: 2px solid var(--border-color);
-}
-
-.hero h1 {
-  font-size: 2.5rem;
-  margin-bottom: 0.5rem;
-  font-weight: 700;
-  color: var(--primary-color);
-}
-
-.hero-subtitle {
-  font-size: 1.125rem;
-  margin-bottom: 0;
-  color: var(--text-light);
-}
-
 /* Region Selector and Chart Styles */
 .region-selector {
     text-align: center;
