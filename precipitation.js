@@ -55,7 +55,7 @@ async function loadFutureByRegion() {
 
 // State
 let currentRegion = 'Northeast';
-let activeScenario = 'all';
+let activeScenarios = []; // 'low', 'high', or null for all
 const regions = ['Northeast', 'Midwest', 'South', 'Northwest'];
 let regionData = null;
 let futureData = null;
@@ -115,9 +115,25 @@ function setupEventListeners() {
     
     document.querySelectorAll('.legend-item').forEach(item => {
         item.addEventListener('click', function() {
-            const scenario = this.dataset.scenario;
-            activeScenario = activeScenario === scenario ? 'all' : scenario;
-            drawChart();
+        const scenario = this.dataset.scenario;
+        const box = this.querySelector('.legend-box');
+
+        if (activeScenarios.includes(scenario)) {
+            // Remove scenario if already selected
+            activeScenarios = activeScenarios.filter(s => s !== scenario);
+            box.classList.remove('selected');  
+        } else {
+            // Add scenario
+            activeScenarios.push(scenario);
+            box.classList.add('selected'); 
+        }
+
+        // If nothing is selected, treat as "all"
+        if (activeScenarios.length === 0) {
+            activeScenarios = ['all'];
+        }
+
+        drawChart();
         });
     });
 }
@@ -252,30 +268,31 @@ function drawChart() {
         .x(d => xScale(d.year))
         .y(d => yScale(d.value))
         .curve(d3.curveBasis);
+
+
+    const showAll = activeScenarios.length === 0;
+
     
-    // Draw historical line
-    const opacity = activeScenario === 'all' ? 1 : 0.3;
-    
-    if (activeScenario === 'all' || activeScenario === 'historical') {
+    if (showAll || activeScenarios.includes('historical')) {
         svg.append('path')
             .datum(historicalData)
             .attr('fill', 'none')
             .attr('stroke', '#888')
             .attr('stroke-width', 3)
-            .attr('d', line)
-            .attr('opacity', activeScenario === 'historical' ? 1 : opacity);
+            .attr('opacity', 1)
+            .attr('d', line);
     }
+
     
     // Draw low emission line
-    if (activeScenario === 'all' || activeScenario === 'low') {
+    if (showAll || activeScenarios.includes('low')) {
         svg.append('path')
             .datum(lowEmissionData)
             .attr('fill', 'none')
-            .attr('stroke', '#e53935')
+            .attr('stroke', '#1e88e5')
             .attr('stroke-width', 3)
+            .attr('opacity', 1)
             .attr('d', line)
-            .attr('opacity', activeScenario === 'low' ? 1 : 0.8)
-            .style('cursor', 'pointer')
             .on('mouseover', function() {
                 d3.select(this).attr('stroke-width', 5);
             })
@@ -283,17 +300,17 @@ function drawChart() {
                 d3.select(this).attr('stroke-width', 3);
             });
     }
+
     
     // Draw high emission line
-    if (activeScenario === 'all' || activeScenario === 'high') {
+    if (showAll || activeScenarios.includes('high')) {
         svg.append('path')
             .datum(highEmissionData)
             .attr('fill', 'none')
-            .attr('stroke', '#1e88e5')
+            .attr('stroke', '#e53935')
             .attr('stroke-width', 3)
+            .attr('opacity', 1)
             .attr('d', line)
-            .attr('opacity', activeScenario === 'high' ? 1 : 0.8)
-            .style('cursor', 'pointer')
             .on('mouseover', function() {
                 d3.select(this).attr('stroke-width', 5);
             })
@@ -301,52 +318,6 @@ function drawChart() {
                 d3.select(this).attr('stroke-width', 3);
             });
     }
+
     
-    // Add scenario labels
-    svg.append('text')
-        .attr('x', xScale(2090))
-        .attr('y', yScale(lowEmissionData[lowEmissionData.length - 1].value))
-        .attr('fill', '#e53935')
-        .style('font-size', '13px')
-        .style('font-weight', 'bold')
-        .text('SSP126');
-    
-    svg.append('text')
-        .attr('x', xScale(2090))
-        .attr('y', yScale(lowEmissionData[lowEmissionData.length - 1].value) + 15)
-        .attr('fill', '#e53935')
-        .style('font-size', '11px')
-        .text('(low-emission)');
-    
-    svg.append('text')
-        .attr('x', xScale(2090))
-        .attr('y', yScale(highEmissionData[highEmissionData.length - 1].value))
-        .attr('fill', '#1e88e5')
-        .style('font-weight', 'bold')
-        .style('font-size', '13px')
-        .text('SSP 585');
-    
-    svg.append('text')
-        .attr('x', xScale(2090))
-        .attr('y', yScale(highEmissionData[highEmissionData.length - 1].value) + 15)
-        .attr('fill', '#1e88e5')
-        .style('font-size', '11px')
-        .text('(high emission)');
-    
-    // Add experiment ID labels
-    const midHistoricalValue = d3.median(historicalData, d => d.value);
-    svg.append('text')
-        .attr('x', xScale(1900))
-        .attr('y', yScale(midHistoricalValue * 0.5))
-        .attr('fill', '#999')
-        .style('font-size', '11px')
-        .style('font-style', 'italic')
-        .text('experiment-id = historical');
-    
-    svg.append('text')
-        .attr('x', xScale(2050))
-        .attr('y', yScale(highEmissionData[highEmissionData.length - 1].value * 1.2))
-        .attr('fill', '#1e88e5')
-        .style('font-size', '11px')
-        .text('experiment-id = SSP 585 (high emission)');
 }
