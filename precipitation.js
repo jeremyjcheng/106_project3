@@ -1,25 +1,19 @@
 // Load D3 from CDN (for d3.csv method)
 async function loadHistoricalByRegion() {
   try {
-    const [
-      midwest,
-      northeast,
-      northwest,
-      south
-    ] = await Promise.all([
-      d3.csv('historical_data/midwest_historical_precipitation.csv'),
-      d3.csv('historical_data/northeast_historical_precipitation.csv'),
-      d3.csv('historical_data/northwest_historical_precipitation.csv'),
-      d3.csv('historical_data/south_historical_precipitation.csv')
+    const [midwest, northeast, northwest, south] = await Promise.all([
+      d3.csv("historical_data/midwest_historical_precipitation.csv"),
+      d3.csv("historical_data/northeast_historical_precipitation.csv"),
+      d3.csv("historical_data/northwest_historical_precipitation.csv"),
+      d3.csv("historical_data/south_historical_precipitation.csv"),
     ]);
 
     return {
       midwest,
       northeast,
       northwest,
-      south
+      south,
     };
-
   } catch (err) {
     console.error("Failed to load historical data:", err);
     return null;
@@ -27,30 +21,24 @@ async function loadHistoricalByRegion() {
 }
 
 async function loadFutureByRegion() {
-    try {
-        const [
+  try {
+    const [midwest, northeast, northwest, south] = await Promise.all([
+      d3.csv("future_data/midwest_futures_merged.csv"),
+      d3.csv("future_data/northeast_futures_merged.csv"),
+      d3.csv("future_data/northwest_futures_merged.csv"),
+      d3.csv("future_data/south_futures_merged.csv"),
+    ]);
+
+    return {
       midwest,
       northeast,
       northwest,
-      south
-    ] = await Promise.all([
-      d3.csv('future_data/midwest_futures_merged.csv'),
-      d3.csv('future_data/northeast_futures_merged.csv'),
-      d3.csv('future_data/northwest_futures_merged.csv'),
-      d3.csv('future_data/south_futures_merged.csv')
-    ]);
-
-    return { 
-        midwest, 
-        northeast, 
-        northwest, 
-        south 
+      south,
     };
-    
   } catch (err) {
-        console.error("Failed to load future data:", err);
-        return null;
-    }
+    console.error("Failed to load future data:", err);
+    return null;
+  }
 }
 
 // State
@@ -61,47 +49,48 @@ let regionData = null;
 let futureData = null;
 
 // Initialize
-document.addEventListener('DOMContentLoaded', async function() {
-    initializeRegionDots();
-    setupEventListeners();
-    
-    // Show loading message
-    const svg = d3.select('#chartSvg');
-    svg.attr('width', 900).attr('height', 500);
-    svg.append('text')
-        .attr('x', 450)
-        .attr('y', 250)
-        .attr('text-anchor', 'middle')
-        .style('font-size', '18px')
-        .text('Loading data...');
-    
-    // Load both historical and future data
-    [regionData, futureData] = await Promise.all([
-        loadHistoricalByRegion(),
-        loadFutureByRegion()
-    ]);
-    
-    if (regionData && futureData) {
-        console.log('✓ All historical data loaded successfully!');
-        console.log('✓ All future data loaded successfully!');
-        console.log('Historical data structure:', regionData);
-        console.log('Future data structure:', futureData);
-        drawChart();
-    } else {
-        svg.select('text').text('Error loading data. Check console for details.');
-    }
+document.addEventListener("DOMContentLoaded", async function () {
+  initializeRegionDots();
+  setupEventListeners();
+
+  // Show loading message
+  const svg = d3.select("#chartSvg");
+  svg.attr("width", 900).attr("height", 500);
+  svg
+    .append("text")
+    .attr("x", 450)
+    .attr("y", 250)
+    .attr("text-anchor", "middle")
+    .style("font-size", "18px")
+    .text("Loading data...");
+
+  // Load both historical and future data
+  [regionData, futureData] = await Promise.all([
+    loadHistoricalByRegion(),
+    loadFutureByRegion(),
+  ]);
+
+  if (regionData && futureData) {
+    console.log("✓ All historical data loaded successfully!");
+    console.log("✓ All future data loaded successfully!");
+    console.log("Historical data structure:", regionData);
+    console.log("Future data structure:", futureData);
+    drawChart();
+  } else {
+    svg.select("text").text("Error loading data. Check console for details.");
+  }
 });
 
 function initializeRegionDots() {
-    const dotsContainer = document.getElementById('dotsContainer');
-    regions.forEach(region => {
-        const dot = document.createElement('span');
-        dot.className = 'dot' + (region === currentRegion ? ' active' : '');
-        dot.textContent = region === currentRegion ? '●' : '○';
-        dot.dataset.region = region;
-        dot.addEventListener('click', () => selectRegion(region));
-        dotsContainer.appendChild(dot);
-    });
+  const dotsContainer = document.getElementById("dotsContainer");
+  regions.forEach((region) => {
+    const dot = document.createElement("span");
+    dot.className = "dot" + (region === currentRegion ? " active" : "");
+    dot.textContent = region === currentRegion ? "●" : "○";
+    dot.dataset.region = region;
+    dot.addEventListener("click", () => selectRegion(region));
+    dotsContainer.appendChild(dot);
+  });
 }
 
 function setupEventListeners() {
@@ -139,84 +128,36 @@ function setupEventListeners() {
 }
 
 function selectRegion(region) {
-    currentRegion = region;
-    document.getElementById('regionName').textContent = region;
-    
-    document.querySelectorAll('.dot').forEach(dot => {
-        const isActive = dot.dataset.region === region;
-        dot.className = 'dot' + (isActive ? ' active' : '');
-        dot.textContent = isActive ? '●' : '○';
-    });
-    
-    drawChart();
+  currentRegion = region;
+  document.getElementById("regionName").textContent = region;
+
+  document.querySelectorAll(".dot").forEach((dot) => {
+    const isActive = dot.dataset.region === region;
+    dot.className = "dot" + (isActive ? " active" : "");
+    dot.textContent = isActive ? "●" : "○";
+  });
+
+  drawChart();
 }
 
 function navigateRegion(direction) {
-    const currentIndex = regions.indexOf(currentRegion);
-    let newIndex;
-    
-    if (direction === 'next') {
-        newIndex = (currentIndex + 1) % regions.length;
-    } else {
-        newIndex = (currentIndex - 1 + regions.length) % regions.length;
-    }
-    
-    selectRegion(regions[newIndex]);
+  const currentIndex = regions.indexOf(currentRegion);
+  let newIndex;
+
+  if (direction === "next") {
+    newIndex = (currentIndex + 1) % regions.length;
+  } else {
+    newIndex = (currentIndex - 1 + regions.length) % regions.length;
+  }
+
+  selectRegion(regions[newIndex]);
 }
 
 function drawChart() {
-    if (!regionData || !futureData) {
-        console.error('No region data or future data available');
-        return;
-    }
-    
-    const width = 900;
-    const height = 500;
-    const margin = { top: 60, right: 100, bottom: 80, left: 60 };
-    
-    // Clear previous content
-    d3.select('#chartSvg').selectAll('*').remove();
-    
-    const svg = d3.select('#chartSvg')
-        .attr('width', width)
-        .attr('height', height);
-    
-    // Get current region data and convert to numbers
-    const regionKey = currentRegion.toLowerCase();
-    const historicalData = regionData[regionKey].map(d => ({
-        year: +d.year,
-        value: +d.pr,
-        type: 'historical'
-    }));
-    
-    // Get future data for low and high emissions from CSV
-    const lowEmissionData = futureData[regionKey].map(d => ({
-        year: +d.year,
-        value: +d.low_emissions_pr,
-        type: 'low-emission'
-    }));
-    
-    const highEmissionData = futureData[regionKey].map(d => ({
-        year: +d.year,
-        value: +d.high_emissions_pr,
-        type: 'high-emission'
-    }));
-    
-    console.log(`Drawing ${currentRegion}`);
-    console.log('Historical sample:', historicalData.slice(0, 3));
-    console.log('Low emission sample:', lowEmissionData.slice(0, 3));
-    console.log('High emission sample:', highEmissionData.slice(0, 3));
-    
-    // Get year range from actual data
-    const historicalStart = d3.min(historicalData, d => d.year);
-    const futureEnd = d3.max([...lowEmissionData, ...highEmissionData], d => d.year);
-    
-    // Scales
-    const xScale = d3.scaleLinear()
-        .domain([historicalStart, futureEnd])
-        .range([margin.left, width - margin.right]);
-    
-    const allValues = [...historicalData, ...lowEmissionData, ...highEmissionData].map(d => d.value);
+  if (!regionData || !futureData) {
+    console.error("No region data or future data available");
+    return;
+  }
 
     const yScale = d3.scaleLinear()
         .domain([d3.min(allValues), d3.max(allValues)])
