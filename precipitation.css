@@ -103,6 +103,25 @@ body {
     display: flex;
     justify-content: center;
     margin-bottom: 20px;
+    position: relative;
+}
+
+.tooltip {
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.85);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    pointer-events: none;
+    font-size: 12px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.tooltip.visible {
+    opacity: 1;
 }
 
 .legend-container {
