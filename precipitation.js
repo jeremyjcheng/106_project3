@@ -391,16 +391,14 @@ function drawChart() {
     .attr("y", yScale(lowEmissionData[lowEmissionData.length - 1].value))
     .attr("fill", "#e53935")
     .style("font-size", "13px")
-    .style("font-weight", "bold")
-    .text("SSP126");
+    .style("font-weight", "bold");
 
   svg
     .append("text")
     .attr("x", xScale(2090))
     .attr("y", yScale(lowEmissionData[lowEmissionData.length - 1].value) + 15)
     .attr("fill", "#e53935")
-    .style("font-size", "11px")
-    .text("(low-emission)");
+    .style("font-size", "11px");
 
   svg
     .append("text")
@@ -408,16 +406,14 @@ function drawChart() {
     .attr("y", yScale(highEmissionData[highEmissionData.length - 1].value))
     .attr("fill", "#1e88e5")
     .style("font-weight", "bold")
-    .style("font-size", "13px")
-    .text("SSP 585");
+    .style("font-size", "13px");
 
   svg
     .append("text")
     .attr("x", xScale(2090))
     .attr("y", yScale(highEmissionData[highEmissionData.length - 1].value) + 15)
     .attr("fill", "#1e88e5")
-    .style("font-size", "11px")
-    .text("(high emission)");
+    .style("font-size", "11px");
 
   // Add experiment ID labels
   const midHistoricalValue = d3.median(historicalData, (d) => d.value);
