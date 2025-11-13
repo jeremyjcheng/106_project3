@@ -3,8 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<<<<<<< HEAD
     <title>Project 3</title>
     <link rel="stylesheet" href="styles.css" />
+=======
+    <title>Climate Precipitation Scenarios</title>
+    <link rel="stylesheet" href="precipitation.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+>>>>>>> jeremy
   </head>
   <body>
     <main>
@@ -17,5 +23,46 @@
         </div>
       </section>
     </main>
+<<<<<<< HEAD
+=======
+
+    <div class="container">
+      <h2 class="title">
+        How climate choices reshape their rainfall (precipitation level)?
+      </h2>
+
+      <div class="button-container">
+        <button class="nav-button" id="prevBtn">&lt; Previous</button>
+        <button class="nav-button" id="nextBtn">Next &gt;</button>
+      </div>
+
+      <div class="region-selector">
+        <span class="region-name" id="regionName">Northeast</span>
+        <div class="dots-container" id="dotsContainer"></div>
+      </div>
+
+      <div class="chart-container">
+        <svg id="chartSvg"></svg>
+        <div id="tooltip" class="tooltip"></div>
+      </div>
+
+      <div class="legend-container">
+        <div class="legend-item" data-scenario="historical">
+          <div class="legend-box legend-historical"></div>
+          <span>historical</span>
+        </div>
+        <div class="legend-item" data-scenario="low">
+          <div class="legend-box legend-low"></div>
+          <span>low emission (SSP 126)</span>
+        </div>
+        <div class="legend-item" data-scenario="high">
+          <div class="legend-box legend-high"></div>
+          <span>high emission (SSP 585)</span>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="precipitation.js"></script>
+>>>>>>> jeremy
   </body>
 </html>
