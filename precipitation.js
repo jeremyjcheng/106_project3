@@ -348,6 +348,17 @@ function drawChart() {
     (d) => d.year >= domainStart && d.year <= domainEnd
   );
 
+  // Connect future lines to the end of historical line
+  const lastHistoricalPoint = historicalData[historicalData.length - 1];
+  const lowWithConnection =
+    filteredLow.length > 0 && filteredLow[0].year > lastHistoricalPoint.year
+      ? [lastHistoricalPoint, ...filteredLow]
+      : filteredLow;
+  const highWithConnection =
+    filteredHigh.length > 0 && filteredHigh[0].year > lastHistoricalPoint.year
+      ? [lastHistoricalPoint, ...filteredHigh]
+      : filteredHigh;
+
   const xScale = d3
     .scaleLinear()
     .domain([domainStart, domainEnd])
@@ -503,7 +514,7 @@ function drawChart() {
   if (activeScenarios.includes("low")) {
     svg
       .append("path")
-      .datum(filteredLow)
+      .datum(lowWithConnection)
       .attr("fill", "none")
       .attr("stroke", "#e53935")
       .attr("stroke-width", 3)
@@ -537,7 +548,7 @@ function drawChart() {
   if (activeScenarios.includes("high")) {
     svg
       .append("path")
-      .datum(filteredHigh)
+      .datum(highWithConnection)
       .attr("fill", "none")
       .attr("stroke", "#1e88e5")
       .attr("stroke-width", 3)
@@ -590,7 +601,7 @@ function drawChart() {
     }
 
     if (activeScenarios.includes("low")) {
-      const regLow = computeRegressionLine(filteredLow);
+      const regLow = computeRegressionLine(lowWithConnection);
       if (regLow) {
         svg
           .append("path")
@@ -604,7 +615,7 @@ function drawChart() {
     }
 
     if (activeScenarios.includes("high")) {
-      const regHigh = computeRegressionLine(filteredHigh);
+      const regHigh = computeRegressionLine(highWithConnection);
       if (regHigh) {
         svg
           .append("path")
