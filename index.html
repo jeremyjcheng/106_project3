@@ -89,37 +89,6 @@
         <div class="writeup-content">
           <h3>Design Rationale</h3>
           <p>
-            After numerous drafts and exploratory graphs and interactive
-            visualizations, we decided to conclude with using a line chart as
-            our primary visual encoding because it effectively displays temporal
-            trends in precipitation data across multiple regions and scenarios.
-            At first, we experimented with a NameGrapher-like graph, plotting
-            each individual cities. However, the granularity of this
-            visualization was far too granular, leading us to scope out and
-            group cities into regions. The continuous lines allow users to
-            easily track changes over time and compare historical patterns with
-            future projections. We encoded different scenarios using distinct
-            colors: gray for historical data, red for low-emission scenarios
-            (SSP 126), and blue for high-emission scenarios (SSP 585), following
-            intuitive color associations where warmer colors suggest higher
-            impact (precipitation levels). A dashed vertical line at 2014
-            separates historical data from future projections, as the historical
-            data cut off at 2014. Furthermore, we added optional regression
-            curves (dashed lines) to help users identify overall trends. This is
-            especially useful when the data points contains high variability.
-            For interactions, we implemented clickable legend items to toggle
-            scenarios independently, allowing users to focus on specific
-            comparisons between scenarios. The region selector with navigation
-            buttons and dots enables easy exploration across the four US
-            regions. We also included a year range filter to let users zoom into
-            specific time periods of interest. To ensure visual continuity, we
-            connected the future projection lines to the last historical data
-            point, creating seamless transitions at the 2014 boundary. We also
-            converted precipitation values from scientific notation to mm/day
-            units for better readability, making the y-axis values more
-            intuitive for readers. The legend items are initialized as selected
-            on page load to accurately reflect the displayed data, and tooltips
-            on hover provide detailed precipitation values for data exploration.
             After many drafts and rounds of exploratory graphs and interactive
             visualizations, we decided to use a line chart as our primary
             visualization. It presents temporal trends in precipitation very
@@ -129,7 +98,10 @@
             to read as there were thousands of cities that didn’t necessarily
             mean anything to the user. This led us to group cities into broader
             regions as it would provide more context and make more sense to the
-            users. The continuous lines help users follow changes and compare
+            users.
+          </p>
+          <p>
+            The continuous lines help users follow changes and compare
             historical patterns with future projections. We encoded scenarios
             with distinct colors: gray for historical data, red for low emission
             (SSP 126), and blue for high emission (SSP 585). These choices align
@@ -137,26 +109,28 @@
             impact. A vertical dashed line at 2014 marks the boundary between
             historical observations and future projections. We also added
             optional regression curves to help users see long term trends when
-            the data is highly variable. To support meaningful exploration, we
-            added several interactive features that help users control what they
-            see. The year window lets viewers adjust the temporal range, which
-            is helpful because precipitation can look very different when
-            comparing short segments with long term trends. Tooltips provide
-            detailed values on hover without cluttering the chart. We split the
-            data into four regions of the United State because regional patterns
-            reflect climate change signals more reliably than city level data,
-            which is often influenced by local noise. To help viewers move
-            through these regions, we built a carousel-style navigator with
-            buttons and dots that encourages exploration and comparison among
-            regions. The legend toggle allows users to show or hide scenarios so
-            they can isolate differences between historical observations, low
-            emission futures, and high emission futures. Our color palette
-            follows conventions in climate modeling, with red for high emission,
-            blue for low emission, and black or gray for historical data. These
-            choices support clarity, interpretability, and a good user
-            experience throughout the visualization.
+            the data is highly variable.
           </p>
-
+          <p>
+            To support meaningful exploration, we added several interactive
+            features that help users control what they see. The year window lets
+            viewers adjust the temporal range, which is helpful because
+            precipitation can look very different when comparing short segments
+            with long term trends. Tooltips provide detailed values on hover
+            without cluttering the chart. We split the data into four regions of
+            the United State because regional patterns reflect climate change
+            signals more reliably than city level data, which is often
+            influenced by local noise. To help viewers move through these
+            regions, we built a carousel-style navigator with buttons and dots
+            that encourages exploration and comparison among regions. The legend
+            toggle allows users to show or hide scenarios so they can isolate
+            differences between historical observations, low emission futures,
+            and high emission futures. Our color palette follows conventions in
+            climate modeling, with red for high emission, blue for low emission,
+            and black or gray for historical data. These choices support
+            clarity, interpretability, and a good user experience throughout the
+            visualization.
+          </p>
           <div class="team-contributions">
             <h3>Development Process Overview</h3>
             <p>
