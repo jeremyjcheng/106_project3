@@ -3,7 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Climate Precipitation Scenarios - Project 3</title>
+    <title>Project 3</title>
+    <link rel="stylesheet" href="styles.css" />
+    <title>Climate Precipitation Scenarios</title>
     <link rel="stylesheet" href="precipitation.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
   </head>
@@ -11,7 +13,7 @@
     <main>
       <section id="home" class="hero">
         <div class="container">
-          <h1>Project 3</h1>
+          <h1>Project3</h1>
           <p class="hero-subtitle">
             Claudine Handali, Sharon Tey, Charles Zhang, and Jeremy Cheng
           </p>
@@ -24,74 +26,71 @@
         How climate choices reshape their rainfall (precipitation level)?
       </h2>
 
-      <p class="description">
-        Explore how different climate scenarios affect precipitation patterns
-        across US regions. Click on legend items to toggle scenarios, or use the
-        navigation buttons to switch between regions.
-      </p>
+      <div class="button-container">
+        <button class="nav-button" id="prevBtn">&lt; Previous</button>
+        <button class="nav-button" id="nextBtn">Next &gt;</button>
+      </div>
 
-      <div class="controls-section">
-        <div class="button-container">
-          <button class="nav-button" id="prevBtn" aria-label="Previous region">
-            <span>&larr;</span> Back
-          </button>
-          <button class="nav-button" id="nextBtn" aria-label="Next region">
-            Next <span>&rarr;</span>
-          </button>
-        </div>
+      <!-- year window controls -->
+      <div class="year-window-controls">
+        <span class="year-window-label">Year window:</span>
+        <label>
+          from
+          <input
+            type="number"
+            id="yearStartInput"
+            class="year-input"
+            placeholder="e.g. 1950"
+          />
+        </label>
+        <label>
+          to
+          <input
+            type="number"
+            id="yearEndInput"
+            class="year-input"
+            placeholder="e.g. 2000"
+          />
+        </label>
+        <button id="applyYearBtn" class="nav-button small-button">
+          Apply
+        </button>
+        <button id="resetYearBtn" class="nav-button small-button">
+          Reset
+        </button>
+      </div>
 
-        <div class="region-selector">
-          <span class="region-name" id="regionName">Northeast</span>
-          <div
-            class="dots-container"
-            id="dotsContainer"
-            role="tablist"
-            aria-label="Region selection"
-          ></div>
-        </div>
+      <div class="region-selector">
+        <span class="region-name" id="regionName">Northeast</span>
+        <div class="dots-container" id="dotsContainer"></div>
       </div>
 
       <div class="chart-container">
-        <div class="chart-wrapper">
-          <svg id="chartSvg"></svg>
-          <div id="tooltip" class="tooltip"></div>
+        <svg id="chartSvg"></svg>
+        <div id="tooltip" class="tooltip"></div>
+      </div>
+
+      <!-- original legend -->
+      <div class="legend-container">
+        <div class="legend-item" data-scenario="historical">
+          <div class="legend-box legend-historical"></div>
+          <span>historical</span>
+        </div>
+        <div class="legend-item" data-scenario="low">
+          <div class="legend-box legend-low"></div>
+          <span>low emission (SSP 126)</span>
+        </div>
+        <div class="legend-item" data-scenario="high">
+          <div class="legend-box legend-high"></div>
+          <span>high emission (SSP 585)</span>
         </div>
       </div>
 
-      <div
-        class="legend-container"
-        role="group"
-        aria-label="Scenario selection"
-      >
-        <div
-          class="legend-item"
-          data-scenario="historical"
-          role="button"
-          tabindex="0"
-          aria-label="Toggle historical data"
-        >
-          <div class="legend-box legend-historical"></div>
-          <span><strong>Historical</strong></span>
-        </div>
-        <div
-          class="legend-item"
-          data-scenario="low"
-          role="button"
-          tabindex="0"
-          aria-label="Toggle SSP1-2.6 scenario"
-        >
-          <div class="legend-box legend-low"></div>
-          <span><strong>SSP1-2.6:</strong> Sustainable Pathway</span>
-        </div>
-        <div
-          class="legend-item"
-          data-scenario="high"
-          role="button"
-          tabindex="0"
-          aria-label="Toggle SSP5-8.5 scenario"
-        >
-          <div class="legend-box legend-high"></div>
-          <span><strong>SSP5-8.5:</strong> High Fossil Fuel Use</span>
+      <!-- single regression toggle button -->
+      <div class="legend-container reg-legend-container">
+        <div class="legend-item" id="regressionToggle">
+          <div class="legend-box legend-reg"></div>
+          <span>regression lines</span>
         </div>
       </div>
     </div>

@@ -20,6 +20,7 @@ async function loadHistoricalByRegion() {
   }
 }
 
+// Load future projection data (low/high emissions) by region
 async function loadFutureByRegion() {
   try {
     const [midwest, northeast, northwest, south] = await Promise.all([
@@ -41,20 +42,29 @@ async function loadFutureByRegion() {
   }
 }
 
-// State
+// Region + scenario state
 let currentRegion = "Northeast";
-let activeScenarios = []; // Empty array means show all
+let activeScenario = "all";
 const regions = ["Northeast", "Midwest", "South", "Northwest"];
 let regionData = null;
 let futureData = null;
 
-// Initialize
+// Charles: year range chosen by user (null means full range)
+let yearStart = null;
+let yearEnd = null;
+
+// Charles: one flag to show or hide all regression lines (default ON)
+let showRegression = true;
+
+// Charles: window size for smoothing regression curve (odd number recommended)
+// Charles: smaller value -> curve follows data more closely (more wiggly)
+// Charles: larger value -> curve is smoother and less curved
+const TREND_WINDOW = 14;
+
 document.addEventListener("DOMContentLoaded", async function () {
   initializeRegionDots();
-  initializeLegendState();
   setupEventListeners();
 
-  // Show loading message
   const svg = d3.select("#chartSvg");
   svg.attr("width", 900).attr("height", 500);
   svg
@@ -65,23 +75,19 @@ document.addEventListener("DOMContentLoaded", async function () {
     .style("font-size", "18px")
     .text("Loading data...");
 
-  // Load both historical and future data
   [regionData, futureData] = await Promise.all([
     loadHistoricalByRegion(),
     loadFutureByRegion(),
   ]);
 
   if (regionData && futureData) {
-    console.log("✓ All historical data loaded successfully!");
-    console.log("✓ All future data loaded successfully!");
-    console.log("Historical data structure:", regionData);
-    console.log("Future data structure:", futureData);
     drawChart();
   } else {
     svg.select("text").text("Error loading data. Check console for details.");
   }
 });
 
+// Create clickable dots for the 4 regions
 function initializeRegionDots() {
   const dotsContainer = document.getElementById("dotsContainer");
   regions.forEach((region) => {
@@ -94,14 +100,7 @@ function initializeRegionDots() {
   });
 }
 
-function initializeLegendState() {
-  // Set all legend items as selected on initial load to match the "show all" state
-  document.querySelectorAll(".legend-item").forEach((item) => {
-    item.classList.add("active");
-    item.querySelector(".legend-box").classList.add("selected");
-  });
-}
-
+// Set up button, legend, year window and regression toggle interactions
 function setupEventListeners() {
   document.getElementById("prevBtn").addEventListener("click", () => {
     navigateRegion("prev");
@@ -111,58 +110,59 @@ function setupEventListeners() {
     navigateRegion("next");
   });
 
+  // Charles: scenario legend click to filter which lines are visible
   document.querySelectorAll(".legend-item").forEach((item) => {
+    const scenario = item.dataset.scenario;
+    if (!scenario) return;
     item.addEventListener("click", function () {
-      toggleScenario(this);
-    });
-
-    item.addEventListener("keydown", function (e) {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        toggleScenario(this);
-      }
+      const s = this.dataset.scenario;
+      activeScenario = activeScenario === s ? "all" : s;
+      drawChart();
     });
   });
 
-  // Keyboard navigation for regions
-  document.addEventListener("keydown", function (e) {
-    if (e.key === "ArrowLeft") {
-      navigateRegion("prev");
-    } else if (e.key === "ArrowRight") {
-      navigateRegion("next");
-    }
-  });
-}
+  const yearStartInput = document.getElementById("yearStartInput");
+  const yearEndInput = document.getElementById("yearEndInput");
+  const applyBtn = document.getElementById("applyYearBtn");
+  const resetBtn = document.getElementById("resetYearBtn");
 
-function toggleScenario(item) {
-  const scenario = item.dataset.scenario;
-  const box = item.querySelector(".legend-box");
+  // Charles: when user clicks Apply, save year range and redraw
+  if (applyBtn) {
+    applyBtn.addEventListener("click", () => {
+      const startVal = parseInt(yearStartInput.value, 10);
+      const endVal = parseInt(yearEndInput.value, 10);
 
-  if (activeScenarios.includes(scenario)) {
-    // Remove scenario if already selected
-    activeScenarios = activeScenarios.filter((s) => s !== scenario);
-    box.classList.remove("selected");
-    item.classList.remove("active");
-  } else {
-    // Add scenario
-    activeScenarios.push(scenario);
-    box.classList.add("selected");
-    item.classList.add("active");
-  }
+      yearStart = Number.isNaN(startVal) ? null : startVal;
+      yearEnd = Number.isNaN(endVal) ? null : endVal;
 
-  // If nothing is selected, treat as "all"
-  if (activeScenarios.length === 0) {
-    activeScenarios = ["all"];
-    // Remove all active classes
-    document.querySelectorAll(".legend-item").forEach((li) => {
-      li.classList.remove("active");
-      li.querySelector(".legend-box").classList.remove("selected");
+      drawChart();
     });
   }
 
-  drawChart();
+  // Charles: when user clicks Reset, clear year range
+  if (resetBtn) {
+    resetBtn.addEventListener("click", () => {
+      yearStart = null;
+      yearEnd = null;
+      if (yearStartInput) yearStartInput.value = "";
+      if (yearEndInput) yearEndInput.value = "";
+      drawChart();
+    });
+  }
+
+  // Charles: toggle one switch for all regression curves
+  const regToggle = document.getElementById("regressionToggle");
+  if (regToggle) {
+    regToggle.classList.toggle("active", showRegression);
+    regToggle.addEventListener("click", () => {
+      showRegression = !showRegression;
+      regToggle.classList.toggle("active", showRegression);
+      drawChart();
+    });
+  }
 }
 
+// When user clicks a region dot
 function selectRegion(region) {
   currentRegion = region;
   document.getElementById("regionName").textContent = region;
@@ -176,6 +176,7 @@ function selectRegion(region) {
   drawChart();
 }
 
+// Cycle through regions with Previous / Next buttons
 function navigateRegion(direction) {
   const currentIndex = regions.indexOf(currentRegion);
   let newIndex;
@@ -189,120 +190,140 @@ function navigateRegion(direction) {
   selectRegion(regions[newIndex]);
 }
 
+// Charles: build a smoothed trend curve using moving average
+// Charles: this replaces strict straight-line regression with a flexible curve
+function computeRegressionLine(data) {
+  if (!data || data.length < 2) {
+    return null;
+  }
+
+  // Charles: sort by year to make sure x is increasing
+  const sorted = [...data].sort((a, b) => a.year - b.year);
+
+  // Charles: use the global TREND_WINDOW but not larger than data length
+  const windowSize = Math.min(TREND_WINDOW, sorted.length);
+  const half = Math.floor(windowSize / 2);
+
+  const result = sorted.map((d, i) => {
+    let start = Math.max(0, i - half);
+    let end = Math.min(sorted.length - 1, i + half);
+    let sum = 0;
+    let count = 0;
+    for (let j = start; j <= end; j++) {
+      sum += sorted[j].value;
+      count++;
+    }
+    return {
+      year: d.year,
+      value: sum / count,
+    };
+  });
+
+  return result;
+}
+
+// Core drawing function (called whenever state changes)
 function drawChart() {
   if (!regionData || !futureData) {
     console.error("No region data or future data available");
     return;
   }
 
-  // Add loading state
-  const chartContainer = d3.select(".chart-container");
-  chartContainer.classed("loading", true);
+  const width = 900;
+  const height = 500;
+  const margin = { top: 60, right: 100, bottom: 80, left: 60 };
 
-  // Use setTimeout to allow smooth transition
-  setTimeout(() => {
-    const width = 900;
-    const height = 500;
-    const margin = { top: 60, right: 100, bottom: 80, left: 90 };
+  d3.select("#chartSvg").selectAll("*").remove();
 
-    // Clear chart
-    d3.select("#chartSvg").selectAll("*").remove();
+  const svg = d3
+    .select("#chartSvg")
+    .attr("width", width)
+    .attr("height", height);
 
-    const svg = d3
-      .select("#chartSvg")
-      .attr("width", width)
-      .attr("height", height);
+  const regionKey = currentRegion.toLowerCase();
 
-    // Get region key
-    const regionKey = currentRegion.toLowerCase();
+  // Map raw CSV rows into numeric {year, value} objects
+  const historicalData = regionData[regionKey].map((d) => ({
+    year: +d.year,
+    value: +d.pr,
+    type: "historical",
+  }));
 
-    // Historical data
-    const historicalData = regionData[regionKey].map((d) => ({
-      year: +d.year,
-      value: +d.pr,
-      type: "historical",
-    }));
+  const lowEmissionData = futureData[regionKey].map((d) => ({
+    year: +d.year,
+    value: +d.low_emissions_pr,
+    type: "low-emission",
+  }));
 
-    // Future datasets
-    const lowEmissionData = futureData[regionKey].map((d) => ({
-      year: +d.year,
-      value: +d.low_emissions_pr,
-      type: "low",
-    }));
+  const highEmissionData = futureData[regionKey].map((d) => ({
+    year: +d.year,
+    value: +d.high_emissions_pr,
+    type: "high-emission",
+  }));
 
-    const highEmissionData = futureData[regionKey].map((d) => ({
-      year: +d.year,
-      value: +d.high_emissions_pr,
-      type: "high",
-    }));
+  const fullHistoricalStart = d3.min(historicalData, (d) => d.year);
+  const fullFutureEnd = d3.max(
+    [...lowEmissionData, ...highEmissionData],
+    (d) => d.year
+  );
 
-    // CONNECT last historical point to future scenarios
-    const lastHistoricalPoint = historicalData[historicalData.length - 1];
+  // Charles: decide x-axis start and end using user input or full range
+  let domainStart = yearStart != null ? yearStart : fullHistoricalStart;
+  let domainEnd = yearEnd != null ? yearEnd : fullFutureEnd;
 
-    const lowWithConnection = [lastHistoricalPoint, ...lowEmissionData];
+  domainStart = Math.max(domainStart, fullHistoricalStart);
+  domainEnd = Math.min(domainEnd, fullFutureEnd);
 
-    const highWithConnection = [lastHistoricalPoint, ...highEmissionData];
+  // Charles: if invalid window, fall back to full domain
+  if (domainEnd < domainStart) {
+    domainStart = fullHistoricalStart;
+    domainEnd = fullFutureEnd;
+  }
 
-    // Year range
-    const historicalStart = d3.min(historicalData, (d) => d.year);
-    const futureEnd = d3.max(
-      [...lowEmissionData, ...highEmissionData],
-      (d) => d.year
-    );
+  // Charles: filter all series to this year window
+  const filteredHistorical = historicalData.filter(
+    (d) => d.year >= domainStart && d.year <= domainEnd
+  );
+  const filteredLow = lowEmissionData.filter(
+    (d) => d.year >= domainStart && d.year <= domainEnd
+  );
+  const filteredHigh = highEmissionData.filter(
+    (d) => d.year >= domainStart && d.year <= domainEnd
+  );
 
-    // Scales
-    const xScale = d3
-      .scaleLinear()
-      .domain([historicalStart, futureEnd])
-      .range([margin.left, width - margin.right]);
+  const xScale = d3
+    .scaleLinear()
+    .domain([domainStart, domainEnd])
+    .range([margin.left, width - margin.right]);
 
-    const allValues = [
-      ...historicalData,
-      ...lowEmissionData,
-      ...highEmissionData,
-    ].map((d) => d.value);
+  const allValues = [
+    ...filteredHistorical,
+    ...filteredLow,
+    ...filteredHigh,
+  ].map((d) => d.value);
 
-    const yScale = d3
-      .scaleLinear()
-      .domain([d3.min(allValues), d3.max(allValues)])
-      .range([height - margin.bottom, margin.top]);
+  const yScale = d3
+    .scaleLinear()
+    .domain([d3.min(allValues), d3.max(allValues)])
+    .range([height - margin.bottom, margin.top]);
 
-    // Axes
-    svg
-      .append("g")
-      .attr("transform", `translate(0,${height - margin.bottom})`)
-      .call(d3.axisBottom(xScale).tickFormat(d3.format("d")))
-      .style("font-size", "12px");
+  const xAxis = d3.axisBottom(xScale).tickFormat(d3.format("d"));
+  const yAxis = d3.axisLeft(yScale).tickFormat(d3.format(".2e"));
 
-    svg
-      .append("g")
-      .attr("transform", `translate(${margin.left},0)`)
-      .call(d3.axisLeft(yScale).tickFormat(d3.format(".2e")))
-      .style("font-size", "12px");
+  svg
+    .append("g")
+    .attr("transform", `translate(0,${height - margin.bottom})`)
+    .call(xAxis)
+    .style("font-size", "12px");
 
-    // Add axis labels
-    svg
-      .append("text")
-      .attr("transform", "rotate(-90)")
-      .attr("y", margin.left - 80)
-      .attr("x", -height / 2)
-      .style("text-anchor", "middle")
-      .style("font-size", "14px")
-      .style("fill", "#333")
-      .style("font-weight", "500")
-      .text("Precipitation");
+  svg
+    .append("g")
+    .attr("transform", `translate(${margin.left},0)`)
+    .call(yAxis)
+    .style("font-size", "12px");
 
-    svg
-      .append("text")
-      .attr("x", width / 2)
-      .attr("y", height - 10)
-      .style("text-anchor", "middle")
-      .style("font-size", "14px")
-      .style("fill", "#333")
-      .style("font-weight", "500")
-      .text("Year");
-
-    // Vertical break line at 2014
+  // Charles: dashed line at 2014 if inside range
+  if (2014 >= domainStart && 2014 <= domainEnd) {
     svg
       .append("line")
       .attr("x1", xScale(2014))
@@ -312,139 +333,222 @@ function drawChart() {
       .attr("stroke", "#999")
       .attr("stroke-width", 2)
       .attr("stroke-dasharray", "5,5");
+  }
 
-    // Labels
+  svg
+    .append("text")
+    .attr("x", xScale((domainStart + Math.min(2014, domainEnd)) / 2))
+    .attr("y", margin.top - 10)
+    .attr("text-anchor", "middle")
+    .attr("fill", "#999")
+    .style("font-size", "16px")
+    .text("Historical");
+
+  svg
+    .append("text")
+    .attr("x", xScale((Math.max(2014, domainStart) + domainEnd) / 2))
+    .attr("y", margin.top - 10)
+    .attr("text-anchor", "middle")
+    .attr("fill", "#ff9800")
+    .style("font-size", "16px")
+    .text("Future");
+
+  const line = d3
+    .line()
+    .x((d) => xScale(d.year))
+    .y((d) => yScale(d.value))
+    .curve(d3.curveBasis);
+
+  const tooltip = d3.select("#tooltip");
+  const svgNode = svg.node();
+
+  const showTooltip = function (event, d) {
+    const xPos = xScale(d.year);
+    const yPos = yScale(d.value);
+    const chartContainer = d3.select(".chart-container").node();
+    const containerRect = chartContainer.getBoundingClientRect();
+    const svgRect = svgNode.getBoundingClientRect();
+
+    const svgOffsetX = svgRect.left - containerRect.left;
+    const svgOffsetY = svgRect.top - containerRect.top;
+
+    tooltip
+      .html(`Year: ${d.year}<br>Precipitation: ${d.value.toExponential(2)}`)
+      .style("left", svgOffsetX + xPos + 10 + "px")
+      .style("top", svgOffsetY + yPos - 40 + "px")
+      .classed("visible", true);
+  };
+
+  const hideTooltip = function () {
+    tooltip.classed("visible", false);
+  };
+
+  const opacity = activeScenario === "all" ? 1 : 0.3;
+
+  // Historical line + invisible circles for tooltip
+  if (activeScenario === "all" || activeScenario === "historical") {
     svg
-      .append("text")
-      .attr("x", xScale((historicalStart + 2014) / 2))
-      .attr("y", margin.top - 10)
-      .attr("text-anchor", "middle")
-      .attr("fill", "#999")
-      .style("font-size", "16px")
-      .text("Past");
+      .append("path")
+      .datum(filteredHistorical)
+      .attr("fill", "none")
+      .attr("stroke", "#888")
+      .attr("stroke-width", 3)
+      .attr("d", line)
+      .attr("opacity", activeScenario === "historical" ? 1 : opacity);
 
     svg
-      .append("text")
-      .attr("x", xScale(2057))
-      .attr("y", margin.top - 10)
-      .attr("text-anchor", "middle")
-      .attr("fill", "#ff9800")
-      .style("font-size", "16px")
-      .text("Future");
+      .selectAll(".historical-point")
+      .data(filteredHistorical)
+      .enter()
+      .append("circle")
+      .attr("cx", (d) => xScale(d.year))
+      .attr("cy", (d) => yScale(d.value))
+      .attr("r", 10)
+      .attr("fill", "transparent")
+      .attr("stroke", "none")
+      .style("cursor", "pointer")
+      .style("pointer-events", "all")
+      .on("mouseover", showTooltip)
+      .on("mouseout", hideTooltip);
+  }
 
-    // Line generator
-    const line = d3
+  // Low emission (SSP 126)
+  if (activeScenario === "all" || activeScenario === "low") {
+    svg
+      .append("path")
+      .datum(filteredLow)
+      .attr("fill", "none")
+      .attr("stroke", "#e53935")
+      .attr("stroke-width", 3)
+      .attr("d", line)
+      .attr("opacity", activeScenario === "low" ? 1 : 0.8)
+      .style("cursor", "pointer")
+      .on("mouseover", function () {
+        d3.select(this).attr("stroke-width", 5);
+      })
+      .on("mouseout", function () {
+        d3.select(this).attr("stroke-width", 3);
+      });
+
+    svg
+      .selectAll(".low-point")
+      .data(filteredLow)
+      .enter()
+      .append("circle")
+      .attr("cx", (d) => xScale(d.year))
+      .attr("cy", (d) => yScale(d.value))
+      .attr("r", 10)
+      .attr("fill", "transparent")
+      .attr("stroke", "none")
+      .style("cursor", "pointer")
+      .style("pointer-events", "all")
+      .on("mouseover", showTooltip)
+      .on("mouseout", hideTooltip);
+  }
+
+  // High emission (SSP 585)
+  if (activeScenario === "all" || activeScenario === "high") {
+    svg
+      .append("path")
+      .datum(filteredHigh)
+      .attr("fill", "none")
+      .attr("stroke", "#1e88e5")
+      .attr("stroke-width", 3)
+      .attr("d", line)
+      .attr("opacity", activeScenario === "high" ? 1 : 0.8)
+      .style("cursor", "pointer")
+      .on("mouseover", function () {
+        d3.select(this).attr("stroke-width", 5);
+      })
+      .on("mouseout", function () {
+        d3.select(this).attr("stroke-width", 3);
+      });
+
+    svg
+      .selectAll(".high-point")
+      .data(filteredHigh)
+      .enter()
+      .append("circle")
+      .attr("cx", (d) => xScale(d.year))
+      .attr("cy", (d) => yScale(d.value))
+      .attr("r", 10)
+      .attr("fill", "transparent")
+      .attr("stroke", "none")
+      .style("cursor", "pointer")
+      .style("pointer-events", "all")
+      .on("mouseover", showTooltip)
+      .on("mouseout", hideTooltip);
+  }
+
+  // Charles: draw smoothed regression curves when toggle is on
+  if (showRegression) {
+    const regLine = d3
       .line()
       .x((d) => xScale(d.year))
       .y((d) => yScale(d.value))
       .curve(d3.curveBasis);
 
-    // Tooltip
-    const tooltip = d3.select("#tooltip");
-    const svgNode = svg.node();
-
-    const showTooltip = function (event, d) {
-      const xPos = xScale(d.year);
-      const yPos = yScale(d.value);
-      const chartContainer = d3.select(".chart-container").node();
-      const containerRect = chartContainer.getBoundingClientRect();
-      const svgRect = svgNode.getBoundingClientRect();
-
-      const svgOffsetX = svgRect.left - containerRect.left;
-      const svgOffsetY = svgRect.top - containerRect.top;
-
-      tooltip
-        .html(
-          `<strong>Year: ${
-            d.year
-          }</strong><br>Precipitation: ${d.value.toExponential(2)}`
-        )
-        .style("left", svgOffsetX + xPos + 10 + "px")
-        .style("top", svgOffsetY + yPos - 40 + "px")
-        .classed("visible", true);
-    };
-
-    const hideTooltip = () => tooltip.classed("visible", false);
-
-    // Show all if nothing selected
-    const showAll = activeScenarios.length === 0;
-
-    // --- HISTORICAL ---
-    if (showAll || activeScenarios.includes("historical")) {
-      svg
-        .append("path")
-        .datum(historicalData)
-        .attr("fill", "none")
-        .attr("stroke", "#888")
-        .attr("stroke-width", 3)
-        .attr("opacity", 1)
-        .attr("d", line);
-
-      svg
-        .selectAll(".historical-point")
-        .data(historicalData)
-        .enter()
-        .append("circle")
-        .attr("cx", (d) => xScale(d.year))
-        .attr("cy", (d) => yScale(d.value))
-        .attr("r", 10)
-        .attr("fill", "transparent")
-        .style("cursor", "pointer")
-        .on("mouseover", showTooltip)
-        .on("mouseout", hideTooltip);
+    if (activeScenario === "all" || activeScenario === "historical") {
+      const regHist = computeRegressionLine(filteredHistorical);
+      if (regHist) {
+        svg
+          .append("path")
+          .datum(regHist)
+          .attr("fill", "none")
+          .attr("stroke", "#555")
+          .attr("stroke-width", 2)
+          .attr("stroke-dasharray", "6,4")
+          .attr("d", regLine);
+      }
     }
 
-    // --- LOW EMISSIONS ---
-    if (showAll || activeScenarios.includes("low")) {
-      svg
-        .append("path")
-        .datum(lowWithConnection) // connected dataset
-        .attr("fill", "none")
-        .attr("stroke", "#1e88e5")
-        .attr("stroke-width", 3)
-        .attr("opacity", 1)
-        .attr("d", line);
-
-      svg
-        .selectAll(".low-point")
-        .data(lowEmissionData)
-        .enter()
-        .append("circle")
-        .attr("cx", (d) => xScale(d.year))
-        .attr("cy", (d) => yScale(d.value))
-        .attr("r", 10)
-        .attr("fill", "transparent")
-        .style("cursor", "pointer")
-        .on("mouseover", showTooltip)
-        .on("mouseout", hideTooltip);
+    if (activeScenario === "all" || activeScenario === "low") {
+      const regLow = computeRegressionLine(filteredLow);
+      if (regLow) {
+        svg
+          .append("path")
+          .datum(regLow)
+          .attr("fill", "none")
+          .attr("stroke", "#b71c1c")
+          .attr("stroke-width", 2)
+          .attr("stroke-dasharray", "6,4")
+          .attr("d", regLine);
+      }
     }
 
-    // --- HIGH EMISSIONS ---
-    if (showAll || activeScenarios.includes("high")) {
-      svg
-        .append("path")
-        .datum(highWithConnection) // connected dataset
-        .attr("fill", "none")
-        .attr("stroke", "#e53935")
-        .attr("stroke-width", 3)
-        .attr("opacity", 1)
-        .attr("d", line);
-
-      svg
-        .selectAll(".high-point")
-        .data(highEmissionData)
-        .enter()
-        .append("circle")
-        .attr("cx", (d) => xScale(d.year))
-        .attr("cy", (d) => yScale(d.value))
-        .attr("r", 10)
-        .attr("fill", "transparent")
-        .style("cursor", "pointer")
-        .on("mouseover", showTooltip)
-        .on("mouseout", hideTooltip);
+    if (activeScenario === "all" || activeScenario === "high") {
+      const regHigh = computeRegressionLine(filteredHigh);
+      if (regHigh) {
+        svg
+          .append("path")
+          .datum(regHigh)
+          .attr("fill", "none")
+          .attr("stroke", "#0d47a1")
+          .attr("stroke-width", 2)
+          .attr("stroke-dasharray", "6,4")
+          .attr("d", regLine);
+      }
     }
+  }
 
-    // Remove loading state
-    chartContainer.classed("loading", false);
-  }, 50);
+  const midHistoricalValue = d3.median(historicalData, (d) => d.value);
+  svg
+    .append("text")
+    .attr("x", xScale(Math.max(1900, domainStart)))
+    .attr("y", yScale(midHistoricalValue * 0.5))
+    .attr("fill", "#999")
+    .style("font-size", "11px")
+    .style("font-style", "italic")
+    .text("experiment-id = historical");
+
+  svg
+    .append("text")
+    .attr("x", xScale(Math.min(2050, domainEnd)))
+    .attr(
+      "y",
+      yScale(filteredHigh[filteredHigh.length - 1].value * 1.2)
+    )
+    .attr("fill", "#1e88e5")
+    .style("font-size", "11px")
+    .text("experiment-id = SSP 585 (high emission)");
 }
