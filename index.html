@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Project 3</title>
+    <link rel="stylesheet" href="styles.css" />
+    <title>Climate Precipitation Scenarios</title>
+    <link rel="stylesheet" href="precipitation.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  </head>
+  <body>
+    <main>
+      <section id="home" class="hero">
+        <div class="container">
+          <h1>Project3</h1>
+          <p class="hero-subtitle">
+            Claudine Handali, Sharon Tey, Charles Zhang, and Jeremy Cheng
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <div class="container">
+      <h2 class="title">
+        How climate choices reshape their rainfall (precipitation level)?
+      </h2>
+
+      <div class="button-container">
+        <button class="nav-button" id="prevBtn">&lt; Previous</button>
+        <button class="nav-button" id="nextBtn">Next &gt;</button>
+      </div>
+
+      <!-- year window controls -->
+      <div class="year-window-controls">
+        <span class="year-window-label">Year window:</span>
+        <label>
+          from
+          <input
+            type="number"
+            id="yearStartInput"
+            class="year-input"
+            placeholder="e.g. 1950"
+          />
+        </label>
+        <label>
+          to
+          <input
+            type="number"
+            id="yearEndInput"
+            class="year-input"
+            placeholder="e.g. 2000"
+          />
+        </label>
+        <button id="applyYearBtn" class="nav-button small-button">
+          Apply
+        </button>
+        <button id="resetYearBtn" class="nav-button small-button">
+          Reset
+        </button>
+      </div>
+
+      <div class="region-selector">
+        <span class="region-name" id="regionName">Northeast</span>
+        <div class="dots-container" id="dotsContainer"></div>
+      </div>
+
+      <div class="chart-container">
+        <svg id="chartSvg"></svg>
+        <div id="tooltip" class="tooltip"></div>
+      </div>
+
+      <!-- original legend -->
+      <div class="legend-container">
+        <div class="legend-item" data-scenario="historical">
+          <div class="legend-box legend-historical"></div>
+          <span>historical</span>
+        </div>
+        <div class="legend-item" data-scenario="low">
+          <div class="legend-box legend-low"></div>
+          <span>low emission (SSP 126)</span>
+        </div>
+        <div class="legend-item" data-scenario="high">
+          <div class="legend-box legend-high"></div>
+          <span>high emission (SSP 585)</span>
+        </div>
+      </div>
+
+      <!-- single regression toggle button -->
+      <div class="legend-container reg-legend-container">
+        <div class="legend-item" id="regressionToggle">
+          <div class="legend-box legend-reg"></div>
+          <span>regression lines</span>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="precipitation.js"></script>
+  </body>
+</html>
