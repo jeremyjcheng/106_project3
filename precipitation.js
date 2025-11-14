@@ -51,6 +51,7 @@ let futureData = null;
 // Initialize
 document.addEventListener("DOMContentLoaded", async function () {
   initializeRegionDots();
+  initializeLegendState();
   setupEventListeners();
 
   // Show loading message
@@ -90,6 +91,14 @@ function initializeRegionDots() {
     dot.dataset.region = region;
     dot.addEventListener("click", () => selectRegion(region));
     dotsContainer.appendChild(dot);
+  });
+}
+
+function initializeLegendState() {
+  // Set all legend items as selected on initial load to match the "show all" state
+  document.querySelectorAll(".legend-item").forEach((item) => {
+    item.classList.add("active");
+    item.querySelector(".legend-box").classList.add("selected");
   });
 }
 
