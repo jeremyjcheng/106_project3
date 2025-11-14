@@ -44,7 +44,7 @@ async function loadFutureByRegion() {
 
 // Region + scenario state
 let currentRegion = "Northeast";
-let activeScenario = "all";
+let activeScenarios = ["historical", "low", "high"]; // Array of active scenarios
 const regions = ["Northeast", "Midwest", "South", "Northwest"];
 let regionData = null;
 let futureData = null;
@@ -63,6 +63,7 @@ const TREND_WINDOW = 14;
 
 document.addEventListener("DOMContentLoaded", async function () {
   initializeRegionDots();
+  initializeLegendState();
   setupEventListeners();
 
   const svg = d3.select("#chartSvg");
@@ -100,6 +101,28 @@ function initializeRegionDots() {
   });
 }
 
+// Initialize legend state to show all items as selected on page load
+function initializeLegendState() {
+  updateLegendVisualState();
+}
+
+// Update legend visual state based on activeScenarios array
+function updateLegendVisualState() {
+  document.querySelectorAll(".legend-item").forEach((item) => {
+    const scenario = item.dataset.scenario;
+    if (!scenario) return; // Skip regression toggle
+
+    const box = item.querySelector(".legend-box");
+    if (activeScenarios.includes(scenario)) {
+      item.classList.add("active");
+      box.classList.add("selected");
+    } else {
+      item.classList.remove("active");
+      box.classList.remove("selected");
+    }
+  });
+}
+
 // Set up button, legend, year window and regression toggle interactions
 function setupEventListeners() {
   document.getElementById("prevBtn").addEventListener("click", () => {
@@ -116,7 +139,13 @@ function setupEventListeners() {
     if (!scenario) return;
     item.addEventListener("click", function () {
       const s = this.dataset.scenario;
-      activeScenario = activeScenario === s ? "all" : s;
+      // Toggle this scenario in the array
+      if (activeScenarios.includes(s)) {
+        activeScenarios = activeScenarios.filter((sc) => sc !== s);
+      } else {
+        activeScenarios.push(s);
+      }
+      updateLegendVisualState();
       drawChart();
     });
   });
@@ -231,7 +260,7 @@ function drawChart() {
 
   const width = 900;
   const height = 500;
-  const margin = { top: 60, right: 100, bottom: 80, left: 60 };
+  const margin = { top: 60, right: 100, bottom: 80, left: 90 };
 
   d3.select("#chartSvg").selectAll("*").remove();
 
@@ -322,6 +351,28 @@ function drawChart() {
     .call(yAxis)
     .style("font-size", "12px");
 
+  // Add axis labels
+  svg
+    .append("text")
+    .attr("transform", "rotate(-90)")
+    .attr("y", margin.left - 80)
+    .attr("x", -height / 2)
+    .style("text-anchor", "middle")
+    .style("font-size", "14px")
+    .style("fill", "#333")
+    .style("font-weight", "500")
+    .text("Precipitation");
+
+  svg
+    .append("text")
+    .attr("x", width / 2)
+    .attr("y", height - 10)
+    .style("text-anchor", "middle")
+    .style("font-size", "14px")
+    .style("fill", "#333")
+    .style("font-weight", "500")
+    .text("Year");
+
   // Charles: dashed line at 2014 if inside range
   if (2014 >= domainStart && 2014 <= domainEnd) {
     svg
@@ -333,6 +384,16 @@ function drawChart() {
       .attr("stroke", "#999")
       .attr("stroke-width", 2)
       .attr("stroke-dasharray", "5,5");
+
+    // Label for the vertical line
+    svg
+      .append("text")
+      .attr("x", xScale(2014))
+      .attr("y", height - margin.bottom + 30)
+      .attr("text-anchor", "middle")
+      .attr("fill", "#999")
+      .style("font-size", "12px")
+      .text("2014");
   }
 
   svg
@@ -383,10 +444,8 @@ function drawChart() {
     tooltip.classed("visible", false);
   };
 
-  const opacity = activeScenario === "all" ? 1 : 0.3;
-
   // Historical line + invisible circles for tooltip
-  if (activeScenario === "all" || activeScenario === "historical") {
+  if (activeScenarios.includes("historical")) {
     svg
       .append("path")
       .datum(filteredHistorical)
@@ -394,7 +453,7 @@ function drawChart() {
       .attr("stroke", "#888")
       .attr("stroke-width", 3)
       .attr("d", line)
-      .attr("opacity", activeScenario === "historical" ? 1 : opacity);
+      .attr("opacity", 1);
 
     svg
       .selectAll(".historical-point")
@@ -413,7 +472,7 @@ function drawChart() {
   }
 
   // Low emission (SSP 126)
-  if (activeScenario === "all" || activeScenario === "low") {
+  if (activeScenarios.includes("low")) {
     svg
       .append("path")
       .datum(filteredLow)
@@ -421,7 +480,7 @@ function drawChart() {
       .attr("stroke", "#e53935")
       .attr("stroke-width", 3)
       .attr("d", line)
-      .attr("opacity", activeScenario === "low" ? 1 : 0.8)
+      .attr("opacity", 1)
       .style("cursor", "pointer")
       .on("mouseover", function () {
         d3.select(this).attr("stroke-width", 5);
@@ -447,7 +506,7 @@ function drawChart() {
   }
 
   // High emission (SSP 585)
-  if (activeScenario === "all" || activeScenario === "high") {
+  if (activeScenarios.includes("high")) {
     svg
       .append("path")
       .datum(filteredHigh)
@@ -455,7 +514,7 @@ function drawChart() {
       .attr("stroke", "#1e88e5")
       .attr("stroke-width", 3)
       .attr("d", line)
-      .attr("opacity", activeScenario === "high" ? 1 : 0.8)
+      .attr("opacity", 1)
       .style("cursor", "pointer")
       .on("mouseover", function () {
         d3.select(this).attr("stroke-width", 5);
@@ -488,7 +547,7 @@ function drawChart() {
       .y((d) => yScale(d.value))
       .curve(d3.curveBasis);
 
-    if (activeScenario === "all" || activeScenario === "historical") {
+    if (activeScenarios.includes("historical")) {
       const regHist = computeRegressionLine(filteredHistorical);
       if (regHist) {
         svg
@@ -502,7 +561,7 @@ function drawChart() {
       }
     }
 
-    if (activeScenario === "all" || activeScenario === "low") {
+    if (activeScenarios.includes("low")) {
       const regLow = computeRegressionLine(filteredLow);
       if (regLow) {
         svg
@@ -516,7 +575,7 @@ function drawChart() {
       }
     }
 
-    if (activeScenario === "all" || activeScenario === "high") {
+    if (activeScenarios.includes("high")) {
       const regHigh = computeRegressionLine(filteredHigh);
       if (regHigh) {
         svg
@@ -544,10 +603,7 @@ function drawChart() {
   svg
     .append("text")
     .attr("x", xScale(Math.min(2050, domainEnd)))
-    .attr(
-      "y",
-      yScale(filteredHigh[filteredHigh.length - 1].value * 1.2)
-    )
+    .attr("y", yScale(filteredHigh[filteredHigh.length - 1].value * 1.2))
     .attr("fill", "#1e88e5")
     .style("font-size", "11px")
     .text("experiment-id = SSP 585 (high emission)");

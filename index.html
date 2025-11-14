@@ -27,37 +27,41 @@
       </h2>
 
       <div class="button-container">
-        <button class="nav-button" id="prevBtn">&lt; Previous</button>
+        <button class="nav-button" id="prevBtn">&lt; Back</button>
         <button class="nav-button" id="nextBtn">Next &gt;</button>
       </div>
 
       <!-- year window controls -->
       <div class="year-window-controls">
-        <span class="year-window-label">Year window:</span>
-        <label>
-          from
-          <input
-            type="number"
-            id="yearStartInput"
-            class="year-input"
-            placeholder="e.g. 1950"
-          />
-        </label>
-        <label>
-          to
-          <input
-            type="number"
-            id="yearEndInput"
-            class="year-input"
-            placeholder="e.g. 2000"
-          />
-        </label>
-        <button id="applyYearBtn" class="nav-button small-button">
-          Apply
-        </button>
-        <button id="resetYearBtn" class="nav-button small-button">
-          Reset
-        </button>
+        <span class="year-window-label">Year Range:</span>
+        <div class="year-input-group">
+          <label class="year-label">
+            <span class="year-label-text">From</span>
+            <input
+              type="number"
+              id="yearStartInput"
+              class="year-input"
+              placeholder="1950"
+            />
+          </label>
+          <label class="year-label">
+            <span class="year-label-text">To</span>
+            <input
+              type="number"
+              id="yearEndInput"
+              class="year-input"
+              placeholder="2000"
+            />
+          </label>
+        </div>
+        <div class="year-button-group">
+          <button id="applyYearBtn" class="year-button apply-button">
+            Apply
+          </button>
+          <button id="resetYearBtn" class="year-button reset-button">
+            Reset
+          </button>
+        </div>
       </div>
 
       <div class="region-selector">
@@ -70,7 +74,7 @@
         <div id="tooltip" class="tooltip"></div>
       </div>
 
-      <!-- original legend -->
+      <!-- legend -->
       <div class="legend-container">
         <div class="legend-item" data-scenario="historical">
           <div class="legend-box legend-historical"></div>
@@ -84,10 +88,6 @@
           <div class="legend-box legend-high"></div>
           <span>high emission (SSP 585)</span>
         </div>
-      </div>
-
-      <!-- single regression toggle button -->
-      <div class="legend-container reg-legend-container">
         <div class="legend-item" id="regressionToggle">
           <div class="legend-box legend-reg"></div>
           <span>regression lines</span>
