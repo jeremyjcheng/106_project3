@@ -300,21 +300,23 @@ function drawChart() {
   const regionKey = currentRegion.toLowerCase();
 
   // Map raw CSV rows into numeric {year, value} objects
+  // Data is in kg/m²/s, convert to mm/day by multiplying by 86400
+  // (1 kg/m²/s = 1 mm/s, so multiply by seconds per day)
   const historicalData = regionData[regionKey].map((d) => ({
     year: +d.year,
-    value: +d.pr,
+    value: +d.pr * 86400,
     type: "historical",
   }));
 
   const lowEmissionData = futureData[regionKey].map((d) => ({
     year: +d.year,
-    value: +d.low_emissions_pr,
+    value: +d.low_emissions_pr * 86400,
     type: "low-emission",
   }));
 
   const highEmissionData = futureData[regionKey].map((d) => ({
     year: +d.year,
-    value: +d.high_emissions_pr,
+    value: +d.high_emissions_pr * 86400,
     type: "high-emission",
   }));
 
@@ -376,7 +378,7 @@ function drawChart() {
     .range([height - margin.bottom, margin.top]);
 
   const xAxis = d3.axisBottom(xScale).tickFormat(d3.format("d"));
-  const yAxis = d3.axisLeft(yScale).tickFormat(d3.format(".2e"));
+  const yAxis = d3.axisLeft(yScale).tickFormat(d3.format(".2f"));
 
   svg
     .append("g")
@@ -400,7 +402,7 @@ function drawChart() {
     .style("font-size", "14px")
     .style("fill", "#333")
     .style("font-weight", "500")
-    .text("Precipitation");
+    .text("Precipitation (mm/day)");
 
   svg
     .append("text")
@@ -473,7 +475,7 @@ function drawChart() {
     const svgOffsetY = svgRect.top - containerRect.top;
 
     tooltip
-      .html(`Year: ${d.year}<br>Precipitation: ${d.value.toExponential(2)}`)
+      .html(`Year: ${d.year}<br>Precipitation: ${d.value.toFixed(2)} mm/day`)
       .style("left", svgOffsetX + xPos + 10 + "px")
       .style("top", svgOffsetY + yPos - 40 + "px")
       .classed("visible", true);
