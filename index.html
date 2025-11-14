@@ -26,32 +26,17 @@
         How climate choices reshape their rainfall (precipitation level)?
       </h2>
 
-      <div class="button-container">
-        <button class="nav-button" id="prevBtn">&lt; Back</button>
-        <button class="nav-button" id="nextBtn">Next &gt;</button>
-      </div>
-
       <!-- year window controls -->
       <div class="year-window-controls">
         <span class="year-window-label">Year Range:</span>
         <div class="year-input-group">
           <label class="year-label">
             <span class="year-label-text">From</span>
-            <input
-              type="number"
-              id="yearStartInput"
-              class="year-input"
-              placeholder="1950"
-            />
+            <input type="number" id="yearStartInput" class="year-input" />
           </label>
           <label class="year-label">
             <span class="year-label-text">To</span>
-            <input
-              type="number"
-              id="yearEndInput"
-              class="year-input"
-              placeholder="2000"
-            />
+            <input type="number" id="yearEndInput" class="year-input" />
           </label>
         </div>
         <div class="year-button-group">
@@ -66,7 +51,11 @@
 
       <div class="region-selector">
         <span class="region-name" id="regionName">Northeast</span>
-        <div class="dots-container" id="dotsContainer"></div>
+        <div class="region-navigation">
+          <button class="nav-button" id="prevBtn">&lt; Back</button>
+          <div class="dots-container" id="dotsContainer"></div>
+          <button class="nav-button" id="nextBtn">Next &gt;</button>
+        </div>
       </div>
 
       <div class="chart-container">

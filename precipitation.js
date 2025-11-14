@@ -82,11 +82,37 @@ document.addEventListener("DOMContentLoaded", async function () {
   ]);
 
   if (regionData && futureData) {
+    setYearInputLimits();
     drawChart();
   } else {
     svg.select("text").text("Error loading data. Check console for details.");
   }
 });
+
+function setYearInputLimits() {
+  const allYears = [
+    ...regions.flatMap((r) => {
+      const key = r.toLowerCase();
+      return [
+        ...(regionData[key]?.map((d) => +d.year) || []),
+        ...(futureData[key]?.map((d) => +d.year) || []),
+      ];
+    }),
+  ];
+  const [min, max] = [Math.min(...allYears), Math.max(...allYears)];
+  const startInput = document.getElementById("yearStartInput");
+  const endInput = document.getElementById("yearEndInput");
+  if (startInput) {
+    startInput.min = min;
+    startInput.max = max;
+    startInput.placeholder = min;
+  }
+  if (endInput) {
+    endInput.min = min;
+    endInput.max = max;
+    endInput.placeholder = max;
+  }
+}
 
 // Create clickable dots for the 4 regions
 function initializeRegionDots() {
@@ -158,12 +184,14 @@ function setupEventListeners() {
   // Charles: when user clicks Apply, save year range and redraw
   if (applyBtn) {
     applyBtn.addEventListener("click", () => {
-      const startVal = parseInt(yearStartInput.value, 10);
-      const endVal = parseInt(yearEndInput.value, 10);
-
-      yearStart = Number.isNaN(startVal) ? null : startVal;
-      yearEnd = Number.isNaN(endVal) ? null : endVal;
-
+      const min = +yearStartInput.min,
+        max = +yearStartInput.max;
+      const start = parseInt(yearStartInput.value, 10);
+      const end = parseInt(yearEndInput.value, 10);
+      yearStart = Number.isNaN(start)
+        ? null
+        : Math.max(min, Math.min(max, start));
+      yearEnd = Number.isNaN(end) ? null : Math.max(min, Math.min(max, end));
       drawChart();
     });
   }
@@ -589,22 +617,4 @@ function drawChart() {
       }
     }
   }
-
-  const midHistoricalValue = d3.median(historicalData, (d) => d.value);
-  svg
-    .append("text")
-    .attr("x", xScale(Math.max(1900, domainStart)))
-    .attr("y", yScale(midHistoricalValue * 0.5))
-    .attr("fill", "#999")
-    .style("font-size", "11px")
-    .style("font-style", "italic")
-    .text("experiment-id = historical");
-
-  svg
-    .append("text")
-    .attr("x", xScale(Math.min(2050, domainEnd)))
-    .attr("y", yScale(filteredHigh[filteredHigh.length - 1].value * 1.2))
-    .attr("fill", "#1e88e5")
-    .style("font-size", "11px")
-    .text("experiment-id = SSP 585 (high emission)");
 }
