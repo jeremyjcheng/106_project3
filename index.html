@@ -23,7 +23,7 @@
 
     <div class="container">
       <h2 class="title">
-        How climate choices reshape their rainfall (precipitation level)?
+        How Climate Choices Shape Future Rainfall Across U.S. Regions?
       </h2>
 
       <!-- year window controls -->
@@ -93,7 +93,10 @@
             visualizations, we decided to use a line chart as our primary
             visualization. It presents temporal trends in precipitation very
             clearly and makes it easy to compare regions and scenarios. At
-            first, we tried a NameGrapher-style plot that showed every
+            first, we tried a world map visualization to show overall changes in preciptation, 
+            but the results were not very informative because precipitation changes 
+            were subtle, and often saturated.  
+            We then shifted to an area plot that showed every
             individual city, but the level of detail made the visualization hard
             to read as there were thousands of cities that didn’t necessarily
             mean anything to the user. This led us to group cities into broader
@@ -103,8 +106,8 @@
           <p>
             The continuous lines help users follow changes and compare
             historical patterns with future projections. We encoded scenarios
-            with distinct colors: gray for historical data, red for low emission
-            (SSP 126), and blue for high emission (SSP 585). These choices align
+            with distinct colors: gray for historical data, blue for low emission
+            (SSP 126), and red for high emission (SSP 585). These choices align
             with intuitive associations where warmer colors suggest stronger
             impact. A vertical dashed line at 2014 marks the boundary between
             historical observations and future projections. We also added
@@ -167,15 +170,15 @@
                 <strong>Claudine Handali:</strong> Cleaned and standardized all
                 datasets, then separated low- and high-emission scenarios across
                 each region. Generated exploratory data analysis (EDA)
-                visualizations
+                visualizations.
               </li>
               <li>
                 <strong>Sharon Tey:</strong>
-                Worked on exploratory graphs Process the historical
+                Worked on exploratory graphs. Processed the historical
                 precipitation data for each region in the United States, by
-                classifying the lat & lon data into their respective regions
+                classifying the latitude & longitude data into their respective regions.
                 Created the structure of the final interactive visualizations
-                using d3
+                using d3.
               </li>
               <li>
                 <strong>Charles Zhang:</strong>
