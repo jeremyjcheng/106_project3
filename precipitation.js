@@ -350,16 +350,29 @@ function drawChart() {
     (d) => d.year >= domainStart && d.year <= domainEnd
   );
 
-  // Connect future lines to the end of historical line
-  const lastHistoricalPoint = historicalData[historicalData.length - 1];
-  const lowWithConnection =
-    filteredLow.length > 0 && filteredLow[0].year > lastHistoricalPoint.year
-      ? [lastHistoricalPoint, ...filteredLow]
-      : filteredLow;
-  const highWithConnection =
-    filteredHigh.length > 0 && filteredHigh[0].year > lastHistoricalPoint.year
-      ? [lastHistoricalPoint, ...filteredHigh]
-      : filteredHigh;
+// Ensure continuity from historical to future data
+const lastHistoricalPoint = historicalData[historicalData.length - 1];
+
+// Check if historical endpoint is inside current domain
+const historicalInsideDomain =
+  lastHistoricalPoint.year >= domainStart &&
+  lastHistoricalPoint.year <= domainEnd;
+
+// Default: use filtered-only data
+let lowWithConnection = filteredLow;
+let highWithConnection = filteredHigh;
+
+// Only add historical point IF:
+// 1. it's visible in the selected year window
+// 2. there is future data to attach
+if (historicalInsideDomain) {
+  if (filteredLow.length > 0) {
+    lowWithConnection = [lastHistoricalPoint, ...filteredLow];
+  }
+  if (filteredHigh.length > 0) {
+    highWithConnection = [lastHistoricalPoint, ...filteredHigh];
+  }
+}
 
   const xScale = d3
     .scaleLinear()
@@ -368,8 +381,8 @@ function drawChart() {
 
   const allValues = [
     ...filteredHistorical,
-    ...filteredLow,
-    ...filteredHigh,
+    ...lowWithConnection,
+    ...highWithConnection,
   ].map((d) => d.value);
 
   const yScale = d3
@@ -437,23 +450,53 @@ function drawChart() {
       .text("2014");
   }
 
-  svg
-    .append("text")
-    .attr("x", xScale((domainStart + Math.min(2014, domainEnd)) / 2))
+// ---------------------------------------------
+// LABELS: Historical / Future (fixed version)
+// ---------------------------------------------
+
+const hasHistorical = filteredHistorical.length > 0;
+const hasFuture = filteredLow.length > 0 || filteredHigh.length > 0;
+
+// Add Historical label ONLY if some historical data remains
+if (hasHistorical) {
+  // Position the label between domainStart and 2014 (or domainEnd if less)
+  const histLabelX = xScale(
+    (domainStart + Math.min(2014, domainEnd)) / 2
+  );
+
+  svg.append("text")
+    .attr("x", histLabelX)
     .attr("y", margin.top - 10)
     .attr("text-anchor", "middle")
     .attr("fill", "#999")
     .style("font-size", "16px")
+    .style("font-weight", "500")
     .text("Historical");
+}
 
-  svg
-    .append("text")
-    .attr("x", xScale((Math.max(2014, domainStart) + domainEnd) / 2))
+// Add Future label ONLY if future data exists in the selected window
+if (hasFuture) {
+  // Earliest future year available
+  const futureStartYear = d3.min([
+    filteredLow.length ? filteredLow[0].year : Infinity,
+    filteredHigh.length ? filteredHigh[0].year : Infinity
+  ]);
+
+  // Place label in the middle of future region
+  const futLabelX = xScale(
+    (Math.max(2014, domainStart) + domainEnd) / 2
+  );
+
+  svg.append("text")
+    .attr("x", futLabelX)
     .attr("y", margin.top - 10)
     .attr("text-anchor", "middle")
     .attr("fill", "#ff9800")
     .style("font-size", "16px")
+    .style("font-weight", "500")
     .text("Future");
+}
+
 
   const line = d3
     .line()
