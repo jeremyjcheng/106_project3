@@ -313,13 +313,13 @@ svg {
 }
 
 .legend-low {
-  background-color: #e53935;
-  border-color: #c62828;
+  background-color: #1e88e5;
+  border-color: #1565c0;
 }
 
 .legend-high {
-  background-color: #1e88e5;
-  border-color: #1565c0;
+  background-color: #e53935;
+  border-color: #c62828;
 }
 
 .legend-item span {
